@@ -41,34 +41,13 @@ RUN set -x \
   --repositories-file /dev/null \
   --repository https://mirror.ps.kz/alpine/v3.10/main \
   --repository https://mirror.ps.kz/alpine/v3.10/community \
-  libxml2 libxslt icu openssl llvm8
-
-USER postgres
-RUN set -x \
- && initdb \
- \
- && printf %s\\n \
-  #      db          user addr method
-  "local all         all       trust" \
-  "local replication all       trust" \
-  "host  all         all  all  trust" \
-  "host  replication all  all  trust" \
-  > $PGDATA/pg_hba.conf \
- \
- && printf %s\\n \
-  wal_level=logical \
-  >> $PGDATA/postgresql.conf
-
-USER root
-RUN set -x \
- && apk add --no-cache --virtual .build-deps \
-  --repositories-file /dev/null \
-  --repository https://mirror.ps.kz/alpine/v3.10/main \
-  --repository https://mirror.ps.kz/alpine/v3.10/community \
+  libxml2 libxslt icu openssl llvm8 \
   build-base clang
 
-# COPY *.c makefile /tmp/pg_json_decoding/
-# USER postgres
+RUN set -x \
+ && su postgres sh -c initdb \
+ && echo wal_level=logical >> $PGDATA/postgresql.conf
+
 CMD set -x \
  && cp -r /src /tmp/pg_json_decoding \
  && cd /tmp/pg_json_decoding \
