@@ -10,7 +10,6 @@ RUN set -x \
  && apk add --no-cache --virtual .build-deps \
   --repositories-file /dev/null \
   --repository https://mirror.ps.kz/alpine/v3.10/main \
-  --repository https://mirror.ps.kz/alpine/v3.10/community \
   build-base \
   linux-headers \
   bison \
@@ -36,15 +35,26 @@ RUN set -x \
   --with-llvm \
  && make \
  && make install \
+ && apk del .build-deps \
+ && rm -r /tmp/* \
  \
- && apk add --no-cache \
+ && apk add --no-cache --virtual .pg-runtime-deps \
   --repositories-file /dev/null \
   --repository https://mirror.ps.kz/alpine/v3.10/main \
-  --repository https://mirror.ps.kz/alpine/v3.10/community \
-  libxml2 libxslt icu openssl llvm8 \
-  build-base clang
+  libxml2 \
+  libxslt \
+  icu \
+  openssl \
+  llvm8
 
 RUN set -x \
+ && apk add --no-cache --virtual .build-deps \
+  --repositories-file /dev/null \
+  --repository https://mirror.ps.kz/alpine/v3.10/main \
+  build-base \
+  clang \
+  llvm8-dev \
+ \
  && su postgres sh -c initdb \
  && echo wal_level=logical >> $PGDATA/postgresql.conf
 
