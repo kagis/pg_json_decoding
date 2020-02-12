@@ -90,10 +90,51 @@ static void pg_decode_commit_txn(
 }
 
 static void tuple_to_json(StringInfo out, TupleDesc tupdesc, HeapTuple tuple) {
-  Datum tupdat = heap_copy_tuple_as_datum(tuple, tupdesc);
-  Datum tupjson = DirectFunctionCall1(row_to_json, tupdat);
-  char *tupjsonstr = TextDatumGetCString(tupjson);
-  appendStringInfoString(out, tupjsonstr);
+  int i;
+  bool emit_comma;
+  emit_comma = false;
+  appendStringInfoChar(out, '{');
+  for (i = 0; i < tupdesc->natts; i++) {
+    Form_pg_attribute att;
+    Datum val;
+    bool isnull;
+    att = TupleDescAttr(tupdesc, i);
+    if (att->attisdropped || att->attnum < 0) {
+      continue;
+    }
+#if (PG_VERSION_NUM >= 120000)
+    if (att->attgenerated) {
+      continue;
+    }
+#endif
+    if (emit_comma) {
+      appendStringInfoChar(out, ',');
+    }
+    emit_comma = true;
+    escape_json(out, NameStr(att->attname));
+    appendStringInfoChar(out, ':');
+    val = heap_getattr(tuple, i + 1, tupdesc, &isnull);
+    if (isnull) {
+      appendStringInfoString(out, "null");
+    } else if (att->attlen == -1 && VARATT_IS_EXTERNAL_ONDISK(val)) {
+      appendStringInfoString(out, "\"__unchanged_toast_datum__\"");
+    } else {
+      ArrayType *arr;
+      char *arrjsonstr;
+      // use array wrapper to specify value type for json conversion function
+      arr = construct_array(&val, 1, att->atttypid, att->attlen, true, 'd');
+      arrjsonstr = TextDatumGetCString(DirectFunctionCall1(array_to_json, PointerGetDatum(arr)));
+      appendBinaryStringInfo(
+        out,
+        // omit json array brackets
+        arrjsonstr + 1,
+        strlen(arrjsonstr + 1) - 1
+      );
+      pfree(arr);
+      pfree(arrjsonstr);
+    }
+  }
+  appendStringInfoChar(out, '}');
 }
 
 static void pg_decode_change(

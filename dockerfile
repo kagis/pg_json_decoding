@@ -5,7 +5,8 @@ ENV PGDATA=/var/lib/postgresql/data
 RUN set -x \
  && install -o postgres -g postgres -m 755 -d $PGDATA /var/lib/postgresql/conf \
  && cd /tmp \
- && wget -qO- https://github.com/postgres/postgres/archive/REL_12_0.tar.gz | tar xz \
+ && wget -qO- https://github.com/postgres/postgres/archive/REL_11_4.tar.gz | tar xz \
+#  && wget -qO- https://github.com/postgres/postgres/archive/REL_12_1.tar.gz | tar xz \
  \
  && apk add --no-cache --virtual .build-deps \
   --repositories-file /dev/null \

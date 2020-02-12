@@ -1,4 +1,4 @@
-create table foo(a text, b text);
+create table foo(a int, b text);
 alter table foo replica identity full;
 create publication test for table foo;
 -- create publication test for all tables;
@@ -6,6 +6,7 @@ create publication test for table foo;
 select pg_create_logical_replication_slot('test', 'pg_json_decoding');
 insert into foo values ('1', 'a');
 update foo set a = '2';
+update foo set b = null;
 delete from foo;
 select pg_logical_emit_message(true, 'message', 'hello');
 
