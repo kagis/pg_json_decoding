@@ -9,6 +9,7 @@
 #include "utils/syscache.h"
 #include "utils/json.h"
 #include "utils/builtins.h"
+#include "utils/array.h"
 
 PG_MODULE_MAGIC;
 
@@ -245,7 +246,11 @@ static void pg_decode_message(
   appendStringInfoString(ctx->out, ",\"prefix\":");
   escape_json(ctx->out, prefix);
   message_b64 = palloc0(pg_b64_enc_len(sz) + 1);
-  pg_b64_encode(message, sz, message_b64);
+  pg_b64_encode(message, sz, message_b64
+#if (PG_VERSION_NUM >= 130000)
+    ,pg_b64_enc_len(sz) + 1
+#endif
+  );
   appendStringInfo(ctx->out, ",\"content\":\"%s\"}", message_b64);
   pfree(message_b64);
   MemoryContextSwitchTo(old);

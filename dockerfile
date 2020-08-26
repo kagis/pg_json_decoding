@@ -7,6 +7,7 @@ RUN set -x \
  && cd /tmp \
  && wget -qO- https://github.com/postgres/postgres/archive/REL_11_4.tar.gz | tar xz \
 #  && wget -qO- https://github.com/postgres/postgres/archive/REL_12_1.tar.gz | tar xz \
+#  && wget -qO- https://github.com/postgres/postgres/archive/REL_13_BETA3.tar.gz | tar xz \
  \
  && apk add --no-cache --virtual .build-deps \
   --repositories-file /dev/null \
